@@ -1,0 +1,21 @@
+import {defineStore} from 'pinia'
+import pinia from "@/store/index.js";
+
+const useAppStore = defineStore({
+    id:'appStore',
+    state:()=>({
+        isDark: false,
+        isSidebarCollapse:false
+    }),
+    actions:{
+        changeSidebarCollapse(){
+            this.isSidebarCollapse = !this.isSidebarCollapse
+        }
+    }
+})
+
+export function useAppStoreOutside(){
+    return useAppStore(pinia)
+}
+
+export default useAppStore
