@@ -4,14 +4,13 @@ import pinia from "@/store/index.js";
 const useAppStore = defineStore({
     id:'appStore',
     state:()=>({
-        isDark: false,
         isSidebarCollapse:false,
         headerHeight: '50px'
     }),
     actions:{
         changeSidebarCollapse(){
             this.isSidebarCollapse = !this.isSidebarCollapse
-        }
+        },
     }
 })
 

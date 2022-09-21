@@ -1,1 +1,19 @@
-$border-color-grey:#dad8d8
+$border-color-grey:#dad8d8;
+$icon-common-width:32px;
+$icon-common-height:32px;
+$icon-common-size:20px;
+
+.wrapper{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $icon-common-size;
+  padding: 2px;
+  height: $icon-common-height;
+  width: $icon-common-width;
+  transition: .3s all;
+}
+.wrapper:hover{
+  background: #eeeaea;
+  transform: scale(1.1);
+}

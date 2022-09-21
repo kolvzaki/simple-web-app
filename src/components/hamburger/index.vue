@@ -1,5 +1,5 @@
 <template>
-  <div class="hamburger-wrapper" @click="appStore.changeSidebarCollapse">
+  <div class="wrapper" @click="appStore.changeSidebarCollapse">
     <icon-menu-fold v-if="!isSidebarCollapse"/>
     <icon-menu-unfold v-else/>
   </div>
@@ -14,19 +14,8 @@ const {isSidebarCollapse} = storeToRefs(appStore)
 
 </script>
 
-<style scoped>
-/*todo:抽取变量*/
-.hamburger-wrapper{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  padding: 2px;
-  height: 32px;
-  width: 32px;
-  transition: .3s all;
-}
-.hamburger-wrapper:hover{
+<style scoped lang="scss">
+@import "src/assets/common";
 
-}
+
 </style>
