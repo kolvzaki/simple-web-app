@@ -4,10 +4,12 @@ const staticRoutes = [
     {
         path: '/',
         component:()=>import('@/layout/index.vue'),
+        name:'layout',
         redirect: '/dashboard',
         children:[
             {
                 path: '/dashboard',
+                name:'dashboard',
                 component: ()=>import('@/pages/dashboard/index.vue')
             }
         ]
