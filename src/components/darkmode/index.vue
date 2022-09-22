@@ -1,30 +1,26 @@
 <template>
   <div class="wrapper" @click="handleClick">
-    <IconSun v-if="isDark"/>
+    <IconSun v-if="isDarkMode"/>
     <IconMoon v-else/>
   </div>
 </template>
 
 <script setup>
-import {IconMoon,IconSun} from '@arco-design/web-vue/es/icon';
-import {useDark,useToggle} from '@vueuse/core'
-import {computed} from "vue";
+import {IconMoon, IconSun} from '@arco-design/web-vue/es/icon';
+import useAppStore from "@/store/useAppStore.js";
+import {storeToRefs} from "pinia";
 
-const isDark = computed(()=>{
-  return localStorage.getItem('isDark') === 'dark'
-})
-const darkMode = useDark({
-  selector: 'body',
-  attribute: 'arco-theme',
-  valueDark: 'dark',
-  valueLight: '',
-  initialValue:'',
-  storageKey:'isDark'
-})
+const appStore = useAppStore()
+const {isDarkMode} = storeToRefs(appStore)
 
 const handleClick = () => {
-
-  useToggle(darkMode)
+  if (isDarkMode.value) {
+    document.body.removeAttribute('arco-theme')
+    appStore.setDarkMode(false)
+  } else {
+    document.body.setAttribute('arco-theme','dark')
+    appStore.setDarkMode(true)
+  }
 }
 
 </script>

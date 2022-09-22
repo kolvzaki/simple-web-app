@@ -47,13 +47,9 @@ import {
   IconBulb,
 } from '@arco-design/web-vue/es/icon';
 import {onMounted} from "vue";
-import {useRoute,useRouter} from 'vue-router'
 const appStore = useAppStore()
 const {isSidebarCollapse,headerHeight} = storeToRefs(appStore)
-
-const routes = useRouter().getRoutes()
 onMounted(()=>{
-  console.log(routes)
 })
 
 </script>
@@ -72,7 +68,6 @@ onMounted(()=>{
     letter-spacing: .15em;
     width: 220px;
     height: 50px;
-    border-bottom: 1px solid $border-color-grey;
   }
   .menu{
     font-size: 16px;

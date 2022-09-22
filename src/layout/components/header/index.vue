@@ -3,13 +3,14 @@
     <hamburger/>
     <div class="right-wrapper">
       <a-space size="medium">
+        <notice/>
         <a-tooltip position="bottom" content="Full Screen" mini>
           <full-screen/>
         </a-tooltip>
-        <a-tooltip position="bottom" content="Full Screen" mini>
+        <a-tooltip position="bottom" content="Dark Mode" mini>
           <dark-mode/>
         </a-tooltip>
-        <a-avatar></a-avatar>
+        <avatar/>
       </a-space>
     </div>
   </a-layout-header>
@@ -19,6 +20,8 @@
 import Hamburger from '@/components/hamburger/index.vue'
 import FullScreen from '@/components/fullscreen/index.vue'
 import DarkMode from '@/components/darkmode/index.vue'
+import Avatar from '@/components/avatar/index.vue'
+import Notice from '@/components/notice/index.vue'
 import useAppStore from "@/store/useAppStore.js";
 import {storeToRefs} from "pinia";
 const appStore = useAppStore()

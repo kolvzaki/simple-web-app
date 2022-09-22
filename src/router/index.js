@@ -3,14 +3,29 @@ import {createRouter, createWebHashHistory} from 'vue-router'
 const staticRoutes = [
     {
         path: '/',
-        component:()=>import('@/layout/index.vue'),
-        name:'layout',
+        component: () => import('@/layout/index.vue'),
+        name: 'root',
         redirect: '/dashboard',
-        children:[
+        children: [
             {
                 path: '/dashboard',
-                name:'dashboard',
-                component: ()=>import('@/pages/dashboard/index.vue')
+                name: 'Dashboard',
+                component: () => import('@/pages/dashboard/index.vue'),
+                meta: {
+                    icon: '',
+                    hidden: false,
+                    permissions: []
+                },
+            },
+            {
+                path: '/menu-item',
+                name: 'Menu Item',
+                component: () => import('@/pages/menuItem/index.vue'),
+                meta: {
+                    icon: '',
+                    hidden: false,
+                    permissions: []
+                },
             }
         ]
     }
@@ -18,7 +33,7 @@ const staticRoutes = [
 
 const router = createRouter({
     history: createWebHashHistory(),
-    routes:staticRoutes,
+    routes: staticRoutes,
 })
 
 export default router
