@@ -1,7 +1,6 @@
 <template>
   <div class="wrapper">
-    <router-view/>
-    123
+    dashboard
   </div>
 </template>
 

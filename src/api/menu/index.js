@@ -1,8 +1,8 @@
 import request from "@/request/index.js";
 
 const URL = {
-    getMenus: '/user/login'
+    getRawMenus: '/menus/raw'
 }
-export const getMenus = (permissions=[]) => {
-    return request.post(URL.getMenus,permissions)
+export const getRawMenus = (roles=[]) => {
+    return request.post(URL.getRawMenus,roles)
 }

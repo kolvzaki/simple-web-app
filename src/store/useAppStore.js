@@ -6,7 +6,7 @@ const useAppStore = defineStore({
     state:()=>({
         isSidebarCollapse:false,
         isDarkMode:false,
-        headerHeight: '50px'
+        headerHeight: '50px',
     }),
     actions:{
         setDarkMode(status){
