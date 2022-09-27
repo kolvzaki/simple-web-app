@@ -6,6 +6,7 @@ import '@arco-design/web-vue/dist/arco.css';
 import App from './App.vue'
 import router from "./router/index.js";
 import pinia from "@/store/index.js";
+import 'animate.css/animate.min.css'
 
 const app = createApp(App)
 app.use(ArcoVue)
