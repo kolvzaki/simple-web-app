@@ -4,21 +4,49 @@ import {useUserStoreOutside} from '@/store/useUserStore.js'
 let userStore = useUserStoreOutside()
 const modules = import.meta.glob('@/pages/**/index.vue')
 
+const findNode = (tree = [], id = -1) => {
+    let res;
+    res = _.find(tree, node => node.id === id)
+    if (!_.isEmpty(res)) return res;
+    for (const node of tree) {
+        if (!_.has(node, 'children')) continue;
+        else {
+            res = findNode(node.children, id)
+        }
+    }
+    return res;
+}
+
+export const generateRouteTreeByRawRoutes = (rawRoutes=[]) => {
+    let routeTree = []
+    routeTree = _.filter(rawRoutes, (route) => {
+        return _.isNull(route.pid)
+    })
+    for (let route of rawRoutes){
+        if (!_.isNull(route.pid)) {
+            let parentNode = findNode(routeTree, route.pid)
+            if (!_.isEmpty(parentNode)){
+                const childNode = {
+                    ...route,
+                    path: parentNode.path + route.path,
+                    parentPath: parentNode.path,
+                }
+                if (!_.has(parentNode, 'children')) {
+                    _.assign(parentNode, {
+                        children: [childNode]
+                    })
+                } else {
+                    parentNode.children.push(childNode)
+                }
+            }
+        }
+    }
+    return routeTree
+}
+
 export const generateRouteTree = async() => {
     let routeList = await userStore.getRawRoutes()
     let routeTree = []
-    const findNode = (tree = [], id = -1) => {
-        let res;
-        res = _.find(tree, node => node.id === id)
-        if (!_.isEmpty(res)) return res;
-        for (const node of tree) {
-            if (!_.has(node, 'children')) continue;
-            else {
-                res = findNode(node.children, id)
-            }
-        }
-        return res;
-    }
     routeTree = _.filter(routeList, (route) => {
         return _.isNull(route.pid)
     })
@@ -60,7 +88,8 @@ export const generateDynamicRouteItem = (routeList = []) => {
                     component: modules[`/src/pages${routeItem.path}/index.vue`],
                     meta: {
                         icon: routeItem.icon,
-                        hidden: routeItem.hidden || false
+                        hidden: routeItem.hidden || false,
+                        createdTime:routeItem.createdTime
                     }
                 })
             } else {
@@ -71,7 +100,8 @@ export const generateDynamicRouteItem = (routeList = []) => {
                     component: modules[`/src/pages${routeItem.path}/index.vue`],
                     meta: {
                         icon: routeItem.icon,
-                        hidden: routeItem.hidden || false
+                        hidden: routeItem.hidden || false,
+                        createdTime:routeItem.createdTime
                     }
                 })
             }

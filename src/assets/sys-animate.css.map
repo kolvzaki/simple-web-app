@@ -1,0 +1,7 @@
+{
+"version": 3,
+"mappings": "AAAA,iCAAkC;EAChC,SAAS,EAAE,UAAU;;AAGvB,iCAAkC;EAChC,SAAS,EAAE,WAAW",
+"sources": ["sys-animate.scss"],
+"names": [],
+"file": "sys-animate.css"
+}
