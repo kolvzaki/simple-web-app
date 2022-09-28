@@ -23,30 +23,42 @@
           </template>
         </a-button>
       </template>
-      <a-table :data="roleData" :loading="tableLoading" row-key="id" v-model:selected-keys="selectedRoles"
-               :row-selection="rowSelection" @selection-change="showSelected" @row-click="clickCurrent">
-        <template #columns>
-          <a-table-column title="Role Name" data-index="roleName"></a-table-column>
-          <a-table-column title="Description" data-index="description"></a-table-column>
-          <a-table-column title="Created Time" data-index="createdTime"></a-table-column>
-          <a-table-column title="Operation">
-            <template #cell="{record}">
-              <a-space>
-                <a-button type="primary" status="warning" @click.stop="openModifyModal(record)">
-                  <template #icon>
-                    <icon-edit/>
-                  </template>
-                </a-button>
-                <a-button type="primary" status="danger" @click.stop="deleteCurrentRole(record)">
-                  <template #icon>
-                    <icon-delete/>
-                  </template>
-                </a-button>
-              </a-space>
-            </template>
-          </a-table-column>
-        </template>
-      </a-table>
+      <a-row :gutter="16">
+        <a-col :span="5">
+          <a-input v-model="roleName" placeholder="Please input">
+            <template #prepend>Role Name:</template>
+          </a-input>
+        </a-col>
+        <a-col :span="5">
+          <a-button @click="query(queryCriteria)" type="primary" >Submit</a-button>
+        </a-col>
+      </a-row>
+      <div class="list-wrapper">
+        <a-table :data="roleData" :loading="tableLoading" row-key="id" v-model:selected-keys="selectedRoles"
+                 :row-selection="rowSelection" @selection-change="showSelected" @row-click="clickCurrent">
+          <template #columns>
+            <a-table-column title="Role Name" data-index="roleName"></a-table-column>
+            <a-table-column title="Description" data-index="description"></a-table-column>
+            <a-table-column title="Created Time" data-index="createdTime"></a-table-column>
+            <a-table-column title="Operation">
+              <template #cell="{record}">
+                <a-space>
+                  <a-button type="primary" status="warning" @click.stop="openModifyModal(record)">
+                    <template #icon>
+                      <icon-edit/>
+                    </template>
+                  </a-button>
+                  <a-button type="primary" status="danger" @click.stop="deleteCurrentRole(record)">
+                    <template #icon>
+                      <icon-delete/>
+                    </template>
+                  </a-button>
+                </a-space>
+              </template>
+            </a-table-column>
+          </template>
+        </a-table>
+      </div>
       <transition name="rolePermissionAnime">
         <a-card class="role-permission-wrapper" v-show="showRolePermission" title="Role Permission">
           <template #extra>
@@ -66,18 +78,24 @@
         </a-card>
       </transition>
     </a-card>
+
   </div>
 </template>
 
 <script setup>
 import {IconRefresh, IconEdit, IconDelete, IconPlus, IconClose} from '@arco-design/web-vue/es/icon'
-import {reactive, ref} from "vue";
+import {defineAsyncComponent, inject, markRaw, reactive, ref, toRefs} from "vue";
 import moment from "moment";
 import _ from 'lodash'
+import useRole from "@/hooks/useRole.js";
+
+const {query,queryCriteria,roleForm} = useRole()
+const {roleName} = toRefs(queryCriteria)
 
 const tableLoading = ref(false)
 const showRolePermission = ref(false)
 const currentRole = reactive({})
+const dialogConfig = inject('dialogConfig')
 
 const getRoles = () => {
   tableLoading.value = true
@@ -88,7 +106,8 @@ const getRoles = () => {
 }
 
 const openCreateModal = () => {
-
+  dialogConfig.title = 'Create Role'
+  dialogConfig.content = markRaw(defineAsyncComponent(()=>import('./createDialog.vue')))
 }
 
 const openModifyModal = (record) => {
@@ -162,6 +181,9 @@ const roleData = ref([
   }
 
   .role-permission-wrapper {
+    margin-top: 20px;
+  }
+  .list-wrapper{
     margin-top: 20px;
   }
 }

@@ -120,7 +120,6 @@ onMounted(()=>{
   height: 100%;
   .list-wrapper{
     margin-top: 20px;
-    background: aliceblue;
   }
 }
 

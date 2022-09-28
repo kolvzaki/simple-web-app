@@ -5,14 +5,16 @@
       <template #content>
         <a-doption>Option 1</a-doption>
         <a-doption>Option 2</a-doption>
-        <a-doption>Option 3</a-doption>
+        <a-doption @click="handleLogout">Logout</a-doption>
       </template>
     </a-dropdown>
   </div>
 </template>
 
 <script setup>
-
+const handleLogout = () => {
+  sessionStorage.clear()
+}
 </script>
 
 <style scoped lang="scss">
