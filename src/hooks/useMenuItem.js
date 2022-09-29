@@ -1,9 +1,9 @@
-import {generateRouteTreeByRawRoutes,generateDynamicRouteItem} from '@/router/routesOperation.js'
+import {generateDynamicRouteItem, generateRouteTreeByRawRoutes} from '@/router/routesOperation.js'
 import {queryMenuItems} from "@/api/menu/index.js";
 import {reactive, ref} from "vue";
 
 
-export default function useMenuItem(){
+export default function useMenuItem() {
     let queryCriteria = reactive({
         menuName: '',
         roles: []
@@ -21,7 +21,7 @@ export default function useMenuItem(){
 
     let menuItems = ref([])
 
-    const query = async (queryCriteria={menuName: '', roles: []}) => {
+    const query = async (queryCriteria = {menuName: '', roles: []}) => {
         const {data} = await queryMenuItems(queryCriteria)
         menuItems.value = generateDynamicRouteItem(generateRouteTreeByRawRoutes(data))
     }

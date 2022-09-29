@@ -4,7 +4,7 @@ import _ from 'lodash'
 import {Message} from '@arco-design/web-vue';
 import useUserStore from "@/store/useUserStore.js";
 
-const whiteList = ['/login','/404']
+const whiteList = ['/login', '/404']
 let routes = [
     {
         path: '/',
@@ -24,12 +24,12 @@ const InitialRouter = async () => {
     console.log('Router Initializing....')
     let r = await generateDynamicRoutes()
     routes[0].children = []
-    routes[0].children.push(...r,{
+    routes[0].children.push(...r, {
         path: '/:pathMatch(.*)*',
         name: 'Exception',
         component: () => import('@/pages/exception/404/index.vue'),
     })
-    const router =  createRouter({
+    const router = createRouter({
         history: createWebHashHistory(),
         routes: routes,
     })

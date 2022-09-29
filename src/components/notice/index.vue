@@ -10,7 +10,7 @@
           <template #extra>
             <a-button type="text">Read all</a-button>
           </template>
-          <notice-item v-for="i in 2"/>
+          <notice-item v-for="i in 2" :key="i"/>
         </a-card>
       </template>
     </a-popover>

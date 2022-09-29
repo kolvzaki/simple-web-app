@@ -1,6 +1,5 @@
 <template>
   create dialog
-
 </template>
 
 <script setup>

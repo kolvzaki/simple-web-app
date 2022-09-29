@@ -1,26 +1,53 @@
-import _ from 'lodash'
 import {reactive} from "vue";
+import _ from "lodash";
 
 export default function useRole() {
     let queryCriteria = reactive({
         roleName: '',
-
     })
 
     let roleForm = reactive({
         name: '',
         description: '',
-        createdTime: '',
     })
 
-    const query = (queryCriteria = {roleName:''}) => {
+    const initRoleForm = () => {
+        _.assign(roleForm,{
+            name: '',
+            description: '',
+        })
+    }
+
+    const query = (queryCriteria = {roleName: ''}) => {
         console.log(queryCriteria)
+    }
+
+    const submitCreate = (roleForm) => {
+        console.log(roleForm)
+    }
+
+    const submitUpdate = (roleForm) => {
+        console.log(roleForm)
+    }
+
+    const requestDelete = (role) => {
+        console.log(role)
+    }
+
+    const requestDeleteBatch = (roles = []) => {
+        console.log(roles)
+        return true
     }
 
     return {
         queryCriteria,
         roleForm,
 
-        query
+        initRoleForm,
+        submitCreate,
+        requestDelete,
+        requestDeleteBatch,
+        submitUpdate,
+        query,
     }
 }

@@ -9,23 +9,22 @@ const findNode = (tree = [], id = -1) => {
     res = _.find(tree, node => node.id === id)
     if (!_.isEmpty(res)) return res;
     for (const node of tree) {
-        if (!_.has(node, 'children')) continue;
-        else {
+        if (_.has(node, 'children')) {
             res = findNode(node.children, id)
         }
     }
     return res;
 }
 
-export const generateRouteTreeByRawRoutes = (rawRoutes=[]) => {
+export const generateRouteTreeByRawRoutes = (rawRoutes = []) => {
     let routeTree = []
     routeTree = _.filter(rawRoutes, (route) => {
         return _.isNull(route.pid)
     })
-    for (let route of rawRoutes){
+    for (let route of rawRoutes) {
         if (!_.isNull(route.pid)) {
             let parentNode = findNode(routeTree, route.pid)
-            if (!_.isEmpty(parentNode)){
+            if (!_.isEmpty(parentNode)) {
                 const childNode = {
                     ...route,
                     path: parentNode.path + route.path,
@@ -44,7 +43,7 @@ export const generateRouteTreeByRawRoutes = (rawRoutes=[]) => {
     return routeTree
 }
 
-export const generateRouteTree = async() => {
+export const generateRouteTree = async () => {
     let routeList = await userStore.getRawRoutes()
     let routeTree = []
     routeTree = _.filter(routeList, (route) => {
@@ -55,7 +54,7 @@ export const generateRouteTree = async() => {
         // console.log(route)
         if (!_.isNull(route.pid)) {
             let parentNode = findNode(routeTree, route.pid)
-            if (!_.isEmpty(parentNode)){
+            if (!_.isEmpty(parentNode)) {
                 const childNode = {
                     ...route,
                     path: parentNode.path + route.path,
@@ -89,7 +88,7 @@ export const generateDynamicRouteItem = (routeList = []) => {
                     meta: {
                         icon: routeItem.icon,
                         hidden: routeItem.hidden || false,
-                        createdTime:routeItem.createdTime
+                        createdTime: routeItem.createdTime
                     }
                 })
             } else {
@@ -101,7 +100,7 @@ export const generateDynamicRouteItem = (routeList = []) => {
                     meta: {
                         icon: routeItem.icon,
                         hidden: routeItem.hidden || false,
-                        createdTime:routeItem.createdTime
+                        createdTime: routeItem.createdTime
                     }
                 })
             }

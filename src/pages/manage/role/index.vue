@@ -9,7 +9,7 @@
               <icon-plus/>
             </template>
           </a-button>
-          <a-button type="primary" status="danger" :disabled="_.isEmpty(selectedRoles)">
+          <a-button type="primary" status="danger" :disabled="_.isEmpty(selectedRoles)" @click="deleteBatchRoles">
             <template #icon>
               <icon-delete/>
             </template>
@@ -30,14 +30,14 @@
           </a-input>
         </a-col>
         <a-col :span="5">
-          <a-button @click="query(queryCriteria)" type="primary" >Submit</a-button>
+          <a-button type="primary" @click="query(queryCriteria)">Submit</a-button>
         </a-col>
       </a-row>
       <div class="list-wrapper">
         <a-table :data="roleData" :loading="tableLoading" row-key="id" v-model:selected-keys="selectedRoles"
-                 :row-selection="rowSelection" @selection-change="showSelected" @row-click="clickCurrent">
+                 :row-selection="rowSelection" @row-click="clickCurrent">
           <template #columns>
-            <a-table-column title="Role Name" data-index="roleName"></a-table-column>
+            <a-table-column title="Role Name" data-index="name"></a-table-column>
             <a-table-column title="Description" data-index="description"></a-table-column>
             <a-table-column title="Created Time" data-index="createdTime"></a-table-column>
             <a-table-column title="Operation">
@@ -48,7 +48,7 @@
                       <icon-edit/>
                     </template>
                   </a-button>
-                  <a-button type="primary" status="danger" @click.stop="deleteCurrentRole(record)">
+                  <a-button type="primary" status="danger" :disabled="isRoot(record)" @click.stop="deleteCurrentRole(record)">
                     <template #icon>
                       <icon-delete/>
                     </template>
@@ -79,24 +79,68 @@
       </transition>
     </a-card>
 
+    <a-modal v-model:visible="dialogConfig.visible" v-model:title="dialogConfig.title"
+             v-model:draggable="dialogConfig.draggable" title-align="start"
+    >
+      <a-form v-model:model="roleForm" ref="roleFormRef" :rules="ROLE_FORM_RULES" auto-label-width>
+        <a-form-item label="Role Name" field="name" feedback validate-trigger="blur">
+          <a-input v-model:model-value="name"></a-input>
+        </a-form-item>
+        <a-form-item label="Description">
+          <a-input v-model:model-value="description"></a-input>
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <a-button @click="submitRoleForm" type="primary">Confirm</a-button>
+        <a-button @click="cancelSubmit" type="primary" status="warning">Cancel</a-button>
+      </template>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import {IconRefresh, IconEdit, IconDelete, IconPlus, IconClose} from '@arco-design/web-vue/es/icon'
-import {defineAsyncComponent, inject, markRaw, reactive, ref, toRefs} from "vue";
+import {IconClose, IconDelete, IconEdit, IconPlus, IconRefresh} from '@arco-design/web-vue/es/icon'
+import {reactive, ref, toRefs} from "vue";
 import moment from "moment";
 import _ from 'lodash'
 import useRole from "@/hooks/useRole.js";
+import {ROLE_FORM_RULES} from "@/common/rule.js";
+import {Message, Popover} from "@arco-design/web-vue";
 
-const {query,queryCriteria,roleForm} = useRole()
+const {
+  query,
+  queryCriteria,
+  roleForm,
+  initRoleForm,
+  submitCreate,
+  submitUpdate,
+  requestDelete,
+  requestDeleteBatch
+} = useRole()
 const {roleName} = toRefs(queryCriteria)
+const {name, description} = toRefs(roleForm)
 
 const tableLoading = ref(false)
 const showRolePermission = ref(false)
 const currentRole = reactive({})
-const dialogConfig = inject('dialogConfig')
+const roleFormRef = ref(null)
+const isCreatedMode = ref(false)
+const dialogConfig = reactive({
+  title: '',
+  visible: false,
+  draggable: true
+})
+const isRoot = (record) => {
+  return _.isEqual(record.name, 'root')
+}
 
+const initDialogConfig = () => {
+  _.assign(dialogConfig, {
+    title: '',
+    visible: false,
+    draggable: true
+  })
+}
 const getRoles = () => {
   tableLoading.value = true
   showRolePermission.value = false
@@ -106,21 +150,55 @@ const getRoles = () => {
 }
 
 const openCreateModal = () => {
-  dialogConfig.title = 'Create Role'
-  dialogConfig.content = markRaw(defineAsyncComponent(()=>import('./createDialog.vue')))
+  isCreatedMode.value = true
+  initRoleForm()
+  _.assign(dialogConfig, {
+    title: 'Create Role',
+    visible: true,
+    draggable: true
+  })
+
 }
 
 const openModifyModal = (record) => {
-  _.assign(currentRole,record)
-  console.log(record)
+  isCreatedMode.value = false
+  initRoleForm()
+  _.assign(roleForm, record)
+  _.assign(dialogConfig, {
+    title: 'Update Role',
+    visible: true,
+    draggable: true
+  })
+}
+
+const submitRoleForm = async () => {
+  await roleFormRef.value.validate((errors) => {
+    if (!_.isEmpty(errors)) {
+      Message.error({
+        content: 'Invalid param!Stop submitting'
+      })
+      return false
+    }
+  })
+  if (isCreatedMode.value) {
+    submitCreate(roleForm)
+  } else {
+    submitUpdate(roleForm)
+  }
+  return true;
+}
+
+const cancelSubmit = () => {
+  initRoleForm()
+  initDialogConfig()
 }
 
 const deleteCurrentRole = (record) => {
   console.log(record)
 }
 
-const showSelected = (rowKeys) => {
-  console.log(rowKeys)
+const deleteBatchRoles = async () => {
+  let res = await requestDeleteBatch(selectedRoles.value)
 }
 
 const clickCurrent = (record) => {
@@ -148,19 +226,19 @@ const selectedRoles = ref([])
 const roleData = ref([
   {
     id: 1,
-    roleName: 'root',
+    name: 'root',
     description: 'root',
     createdTime: moment().format('YYYY-MM-DD HH:mm:SS')
   },
   {
     id: 2,
-    roleName: 'admin',
+    name: 'admin',
     description: 'admin',
     createdTime: moment().format('YYYY-MM-DD HH:mm:SS')
   },
   {
     id: 3,
-    roleName: 'user',
+    name: 'user',
     description: 'user',
     createdTime: moment().format('YYYY-MM-DD HH:mm:SS')
   }
@@ -171,6 +249,7 @@ const roleData = ref([
 
 <style scoped lang="scss">
 @import 'src/assets/sys-animate';
+
 .main-wrapper {
   background: aliceblue;
   width: 100%;
@@ -183,7 +262,8 @@ const roleData = ref([
   .role-permission-wrapper {
     margin-top: 20px;
   }
-  .list-wrapper{
+
+  .list-wrapper {
     margin-top: 20px;
   }
 }
