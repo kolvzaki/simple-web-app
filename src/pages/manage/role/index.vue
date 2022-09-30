@@ -35,7 +35,7 @@
       </a-row>
       <div class="list-wrapper">
         <a-table :data="roleData" :loading="tableLoading" row-key="id" v-model:selected-keys="selectedRoles"
-                 :row-selection="rowSelection" @row-click="clickCurrent">
+                 :row-selection="rowSelection" @row-click="selectCurrent">
           <template #columns>
             <a-table-column title="Role Name" data-index="name"></a-table-column>
             <a-table-column title="Description" data-index="description"></a-table-column>
@@ -48,11 +48,18 @@
                       <icon-edit/>
                     </template>
                   </a-button>
-                  <a-button type="primary" status="danger" :disabled="isRoot(record)" @click.stop="deleteCurrentRole(record)">
+                  <a-button type="primary" status="success" @click.stop="editCurrentRolePermission(record)">
                     <template #icon>
-                      <icon-delete/>
+                      <icon-list/>
                     </template>
                   </a-button>
+                  <a-popconfirm @ok="deleteCurrentRole(record)" :content="`Are you sure to delete ${record.name} role?`" ok-text="Sure" cancel-text="Cancel">
+                    <a-button type="primary" status="danger" :disabled="isRoot(record)">
+                      <template #icon>
+                        <icon-delete/>
+                      </template>
+                    </a-button>
+                  </a-popconfirm>
                 </a-space>
               </template>
             </a-table-column>
@@ -86,7 +93,7 @@
         <a-form-item label="Role Name" field="name" feedback validate-trigger="blur">
           <a-input v-model:model-value="name"></a-input>
         </a-form-item>
-        <a-form-item label="Description">
+        <a-form-item label="Description" field="description">
           <a-input v-model:model-value="description"></a-input>
         </a-form-item>
       </a-form>
@@ -99,13 +106,13 @@
 </template>
 
 <script setup>
-import {IconClose, IconDelete, IconEdit, IconPlus, IconRefresh} from '@arco-design/web-vue/es/icon'
+import {IconClose, IconDelete, IconEdit, IconList, IconPlus, IconRefresh} from '@arco-design/web-vue/es/icon'
 import {reactive, ref, toRefs} from "vue";
 import moment from "moment";
 import _ from 'lodash'
 import useRole from "@/hooks/useRole.js";
 import {ROLE_FORM_RULES} from "@/common/rule.js";
-import {Message, Popover} from "@arco-design/web-vue";
+import {Message} from "@arco-design/web-vue";
 
 const {
   query,
@@ -144,6 +151,7 @@ const initDialogConfig = () => {
 const getRoles = () => {
   tableLoading.value = true
   showRolePermission.value = false
+  query(queryCriteria)
   setTimeout(() => {
     tableLoading.value = false
   }, 500)
@@ -201,7 +209,7 @@ const deleteBatchRoles = async () => {
   let res = await requestDeleteBatch(selectedRoles.value)
 }
 
-const clickCurrent = (record) => {
+const editCurrentRolePermission = (record) => {
   _.assign(currentRole, record)
   showRolePermission.value = true
 }
@@ -222,6 +230,13 @@ const rowSelection = reactive({
 })
 
 const selectedRoles = ref([])
+const selectCurrent = (record) => {
+  if (_.includes(selectedRoles.value, record.id)) {
+    _.remove(selectedRoles.value, (id) => id === record.id)
+  } else {
+    selectedRoles.value.push(record.id)
+  }
+}
 
 const roleData = ref([
   {
@@ -249,20 +264,15 @@ const roleData = ref([
 
 <style scoped lang="scss">
 @import 'src/assets/sys-animate';
-
 .main-wrapper {
-  background: aliceblue;
   width: 100%;
   height: 100%;
-
   .role-wrapper {
 
   }
-
   .role-permission-wrapper {
     margin-top: 20px;
   }
-
   .list-wrapper {
     margin-top: 20px;
   }

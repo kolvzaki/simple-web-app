@@ -52,20 +52,22 @@ export const generateRouteTree = async () => {
     // console.log(routeTree)
     routeList.forEach(route => {
         // console.log(route)
-        if (!_.isNull(route.pid)) {
-            let parentNode = findNode(routeTree, route.pid)
-            if (!_.isEmpty(parentNode)) {
-                const childNode = {
-                    ...route,
-                    path: parentNode.path + route.path,
-                    parentPath: parentNode.path,
-                }
-                if (!_.has(parentNode, 'children')) {
-                    _.assign(parentNode, {
-                        children: [childNode]
-                    })
-                } else {
-                    parentNode.children.push(childNode)
+        if (!route.hidden) {
+            if (!_.isNull(route.pid)) {
+                let parentNode = findNode(routeTree, route.pid)
+                if (!_.isEmpty(parentNode)) {
+                    const childNode = {
+                        ...route,
+                        path: parentNode.path + route.path,
+                        parentPath: parentNode.path,
+                    }
+                    if (!_.has(parentNode, 'children')) {
+                        _.assign(parentNode, {
+                            children: [childNode]
+                        })
+                    } else {
+                        parentNode.children.push(childNode)
+                    }
                 }
             }
         }
