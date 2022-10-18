@@ -66,26 +66,25 @@
           </template>
         </a-table>
       </div>
-      <transition name="rolePermissionAnime">
-        <a-card class="role-permission-wrapper" v-show="showRolePermission" title="Role Permission">
-          <template #extra>
-            <a-space>
-              <a-button type="primary" @click="getCurrentRolesPermission">
-                <template #icon>
-                  <icon-refresh/>
-                </template>
-              </a-button>
-              <a-button type="primary" status="warning" @click="closeCurrentRolePermission">
-                <template #icon>
-                  <icon-close/>
-                </template>
-              </a-button>
-            </a-space>
-          </template>
-        </a-card>
-      </transition>
     </a-card>
-
+    <transition name="rolePermissionAnime">
+      <a-card class="role-permission-wrapper" v-show="showRolePermission" title="Role Permission">
+        <template #extra>
+          <a-space>
+            <a-button type="primary" @click="getCurrentRolesPermission">
+              <template #icon>
+                <icon-refresh/>
+              </template>
+            </a-button>
+            <a-button type="primary" status="warning" @click="closeCurrentRolePermission">
+              <template #icon>
+                <icon-close/>
+              </template>
+            </a-button>
+          </a-space>
+        </template>
+      </a-card>
+    </transition>
     <a-modal v-model:visible="dialogConfig.visible" v-model:title="dialogConfig.title"
              v-model:draggable="dialogConfig.draggable" title-align="start"
     >

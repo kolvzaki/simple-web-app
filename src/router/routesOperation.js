@@ -88,6 +88,7 @@ export const generateDynamicRouteItem = (routeList = []) => {
                     children: routeItem?.children || undefined,
                     component: modules[`/src/pages${routeItem.path}/index.vue`],
                     meta: {
+                        id: routeItem.id,
                         icon: routeItem.icon,
                         hidden: routeItem.hidden || false,
                         createdTime: routeItem.createdTime
@@ -100,6 +101,7 @@ export const generateDynamicRouteItem = (routeList = []) => {
                     redirect: routeItem?.redirect || undefined,
                     component: modules[`/src/pages${routeItem.path}/index.vue`],
                     meta: {
+                        id: routeItem.id,
                         icon: routeItem.icon,
                         hidden: routeItem.hidden || false,
                         createdTime: routeItem.createdTime

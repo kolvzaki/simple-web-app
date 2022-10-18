@@ -23,7 +23,7 @@ request.interceptors.response.use((response) => {
     return Promise.reject(response)
 }, error => {
     Message.error({
-        content: `System Error! Reason: ${error?.message || 'Unknown!'}`
+        content: `System Error! Reason:${error?.code}:${error?.message || 'Unknown!'}`
     })
     console.log(error)
     return Promise.reject(error)

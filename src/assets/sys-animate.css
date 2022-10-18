@@ -4,4 +4,10 @@
 .rolePermissionAnime-leave-active {
   animation: fadeOut .3s; }
 
+.menuRoleAnime-enter-active {
+  animation: zoomIn .3s; }
+
+.menuRoleAnime-leave-active {
+  animation: zoomOut .3s; }
+
 /*# sourceMappingURL=sys-animate.css.map */

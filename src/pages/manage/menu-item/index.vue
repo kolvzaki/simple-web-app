@@ -1,21 +1,21 @@
 <template>
   <div class="main-wrapper">
     <a-card>
-     <template #title>
-       <a-space>
-         <span>Menu Item</span>
-         <a-button type="primary" @click="openCreateModal">
-           <template #icon>
-             <icon-plus/>
-           </template>
-         </a-button>
-         <a-button type="primary" status="danger" :disabled="_.isEmpty(selectedItems)">
-           <template #icon>
-             <icon-delete/>
-           </template>
-         </a-button>
-       </a-space>
-     </template>
+      <template #title>
+        <a-space>
+          <span>Menu Item</span>
+          <a-button type="primary" @click="openCreateModal">
+            <template #icon>
+              <icon-plus/>
+            </template>
+          </a-button>
+          <a-button type="primary" status="danger" :disabled="_.isEmpty(selectedItems)">
+            <template #icon>
+              <icon-delete/>
+            </template>
+          </a-button>
+        </a-space>
+      </template>
       <template #extra>
         <a-button type="primary" @click="query">
           <template #icon>
@@ -30,17 +30,22 @@
           </a-input>
         </a-col>
         <a-col :span="5">
-          <a-select  v-model="roles" multiple allow-clear allow-search :max-tag-count="3" placeholder="Please select" value-key="id">
+          <a-select v-model="roles" multiple allow-clear allow-search :max-tag-count="3" placeholder="Please select"
+                    value-key="id">
             <template #prefix>Role</template>
-            <a-option v-for="option in roleOption" :label="option.name" :value="option.id" :index="option.id"></a-option>
+            <a-option v-for="option in roleOption" :label="option.name" :value="option.id"
+                      :index="option.id"></a-option>
           </a-select>
         </a-col>
         <a-col :span="5">
-          <a-button @click="query(queryCriteria)" type="primary" >Submit</a-button>
+          <a-button @click="query(queryCriteria)" type="primary">Submit</a-button>
         </a-col>
       </a-row>
       <div class="list-wrapper">
-        <a-table :data="menuItems" :row-selection="rowSelection" row-key="id" v-model:selected-keys="selectedItems">
+        <a-table :data="menuItems" :row-selection="rowSelection"
+                 v-model:expanded-keys="selectedItems" :default-expand-all-rows="true"
+                 row-key="path"
+        >
           <template #columns>
             <a-table-column title="Menu Name" data-index="name"></a-table-column>
             <a-table-column title="Menu Path" data-index="path"></a-table-column>
@@ -55,6 +60,11 @@
                       <icon-edit/>
                     </template>
                   </a-button>
+                  <a-button type="primary" status="success" @click.stop="editCurrentMenuRole(record)">
+                    <template #icon>
+                      <icon-list/>
+                    </template>
+                  </a-button>
                   <a-button type="primary" status="danger" @click.stop="deleteCurrentMenuItem(record)">
                     <template #icon>
                       <icon-delete/>
@@ -67,22 +77,68 @@
         </a-table>
       </div>
     </a-card>
+
+    <transition name="menuRoleAnime">
+      <a-card v-show="showMenuRole" class="menu-role-wrapper" title="Role Permission">
+        <template #extra>
+          <a-space>
+            <a-button type="primary" status="success" @click="saveMenuRole(currentMenu.meta.id)">
+              <template #icon>
+                <icon-save/>
+              </template>
+            </a-button>
+            <a-button type="primary" @click="queryMenuRole(currentMenu.meta.id)">
+              <template #icon>
+                <icon-refresh/>
+              </template>
+            </a-button>
+            <a-button type="primary" status="warning" @click="closeCurrentMenuRole">
+              <template #icon>
+                <icon-close/>
+              </template>
+            </a-button>
+          </a-space>
+        </template>
+        <div class="role-wrapper">
+          <a-tooltip v-for="role in menuRoles" :key="role.id" :content="role.description" position="bottom">
+            <a-tag :key="role.id" size="large" bordered closable color="arcoblue" class="role-tag">
+              {{ role.name }}
+            </a-tag>
+          </a-tooltip>
+          <a-tag class="role-tag" size="large" bordered @click="showSelector" v-if="!isClicked">
+            <template #icon>
+              <icon-plus></icon-plus>
+            </template>
+            Add Role
+          </a-tag>
+          <a-select allow-clear allow-search placeholder="Please select"
+                    @change="insertNewRole" @blur="onSelectorBlur"
+                    style="width: 200px" value-key="id" v-else>
+            <a-option v-for="option in roleOption" :label="option.name" :value="option.id"
+                      :index="option.id"></a-option>
+          </a-select>
+        </div>
+      </a-card>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import _ from 'lodash'
 import useMenuItem from "@/hooks/useMenuItem.js";
-import {onMounted, reactive, ref, toRefs} from "vue";
-import {IconPlus,IconDelete,IconRefresh,IconEdit} from '@arco-design/web-vue/es/icon'
+import {computed, nextTick, onMounted, reactive, ref, toRefs} from "vue";
+import {IconPlus, IconDelete, IconRefresh, IconEdit, IconList, IconClose, IconSave} from '@arco-design/web-vue/es/icon'
+import {Message} from "@arco-design/web-vue";
 
 const selectedItems = ref([])
-const {queryCriteria,menuItemForm,menuItems,query} = useMenuItem()
-const {menuName,roles} = toRefs(queryCriteria)
+const currentMenu = reactive({})
+const showMenuRole = ref(false)
+const {queryCriteria, menuItemForm, menuItems, menuRoles, query, queryMenuRole} = useMenuItem()
+const {menuName, roles} = toRefs(queryCriteria)
 const rowSelection = reactive({
   type: 'checkbox',
   showCheckedAll: true,
-  onlyCurrent:true,
+  onlyCurrent: true,
 })
 const roleOption = ref([
   {
@@ -108,18 +164,74 @@ const deleteCurrentMenuItem = (record) => {
   console.log(record)
 }
 
-onMounted(()=>{
+const editCurrentMenuRole = async (record) => {
+  _.assign(currentMenu, record)
+  showMenuRole.value = true
+  await queryMenuRole(record.meta.id)
+}
+
+const saveMenuRole = (menuId) => {
+
+}
+
+const isClicked = ref(false)
+const showSelector = () => {
+  isClicked.value = true
+
+}
+const onSelectorBlur = () => {
+  isClicked.value = false
+}
+const insertNewRole = (val) => {
+  console.log(val)
+  let option = _.find(roleOption.value, (e) => {
+    return e.id === val
+  })
+  if (_.find(menuRoles.value, (e) => {
+    return e.id === option.id
+  })) {
+    Message.info({
+      content: 'Role already exists!'
+    })
+  } else {
+    menuRoles.value.push(option)
+  }
+  isClicked.value = false
+}
+
+const closeCurrentMenuRole = () => {
+  showMenuRole.value = false
+  _.assign(currentMenu, {})
+}
+
+onMounted(() => {
   query(queryCriteria)
 })
 
 </script>
 
 <style scoped lang="scss">
-.main-wrapper{
+@import 'src/assets/sys-animate';
+
+.main-wrapper {
   width: 100%;
   height: 100%;
-  .list-wrapper{
+
+  .list-wrapper {
     margin-top: 20px;
+  }
+
+  .menu-role-wrapper {
+    margin-top: 20px;
+
+    .role-tag {
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .role-tag:hover {
+      animation: pulse .3s;
+    }
   }
 }
 
