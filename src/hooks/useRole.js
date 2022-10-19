@@ -1,5 +1,7 @@
-import {reactive} from "vue";
+import {reactive, ref} from "vue";
 import _ from "lodash";
+import {fetchRoles} from "@/api/role/index.js";
+import {Message} from "@arco-design/web-vue";
 
 export default function useRole() {
     let queryCriteria = reactive({
@@ -11,6 +13,8 @@ export default function useRole() {
         description: '',
     })
 
+    let rolesOption = ref([])
+
     const initRoleForm = () => {
         _.assign(roleForm,{
             name: '',
@@ -18,6 +22,10 @@ export default function useRole() {
         })
     }
 
+    const getAllRoles = async () => {
+        const {data} = await fetchRoles()
+        rolesOption.value = data
+    }
     const query = (queryCriteria = {roleName: ''}) => {
         console.log(queryCriteria)
     }
@@ -42,6 +50,7 @@ export default function useRole() {
     return {
         queryCriteria,
         roleForm,
+        rolesOption,
 
         initRoleForm,
         submitCreate,
@@ -49,5 +58,7 @@ export default function useRole() {
         requestDeleteBatch,
         submitUpdate,
         query,
+        getAllRoles,
+
     }
 }

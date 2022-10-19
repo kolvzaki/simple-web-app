@@ -33,7 +33,7 @@
           <a-select v-model="roles" multiple allow-clear allow-search :max-tag-count="3" placeholder="Please select"
                     value-key="id">
             <template #prefix>Role</template>
-            <a-option v-for="option in roleOption" :label="option.name" :value="option.id"
+            <a-option v-for="option in rolesOption" :label="option.name" :value="option.id"
                       :index="option.id"></a-option>
           </a-select>
         </a-col>
@@ -82,7 +82,7 @@
       <a-card v-show="showMenuRole" class="menu-role-wrapper" title="Role Permission">
         <template #extra>
           <a-space>
-            <a-button type="primary" status="success" @click="saveMenuRole(currentMenu.meta.id)">
+            <a-button type="primary" status="success" @click="saveMenuRoles(currentMenu.meta.id)">
               <template #icon>
                 <icon-save/>
               </template>
@@ -101,7 +101,8 @@
         </template>
         <div class="role-wrapper">
           <a-tooltip v-for="role in menuRoles" :key="role.id" :content="role.description" position="bottom">
-            <a-tag :key="role.id" size="large" bordered closable color="arcoblue" class="role-tag">
+            <a-tag :key="role.id" size="large" bordered closable color="arcoblue" class="role-tag"
+                   @close="deleteCurrentRole(role.id)">
               {{ role.name }}
             </a-tag>
           </a-tooltip>
@@ -114,48 +115,124 @@
           <a-select allow-clear allow-search placeholder="Please select"
                     @change="insertNewRole" @blur="onSelectorBlur"
                     style="width: 200px" value-key="id" v-else>
-            <a-option v-for="option in roleOption" :label="option.name" :value="option.id"
+            <a-option v-for="option in rolesOption" :label="option.name" :value="option.id"
                       :index="option.id"></a-option>
           </a-select>
         </div>
       </a-card>
     </transition>
+
+    <a-modal v-model:visible="dialogConfig.visible" v-model:title="dialogConfig.title"
+             v-model:draggable="dialogConfig.draggable" title-align="start"
+    >
+      <a-form v-model:model="menuItemForm" ref="permissionFormRef" :rules="MENU_ITEM_FORM_RULES" auto-label-width>
+        <a-form-item label="Parent">
+          <a-cascader :options="menuItems" placeholder="Please select..."
+                      check-strictly @change="onParentChange"
+                      :field-names="cascaderFieldName" allow-clear allow-search
+          ></a-cascader>
+        </a-form-item>
+        <a-form-item label="Menu Name" field="name" feedback validate-trigger="blur">
+          <a-input v-model:model-value="name"></a-input>
+        </a-form-item>
+        <a-form-item label="Path" field="path">
+          <a-input v-model:model-value="path">
+            <template #prefix v-if="!_.isEmpty(pid)">
+              {{ parentPath }}
+            </template>
+            <template #prefix v-else>/</template>
+          </a-input>
+        </a-form-item>
+        <a-form-item label="Icon">
+          <a-select></a-select>
+        </a-form-item>
+        <a-form-item label="Hidden">
+          <a-select></a-select>
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <a-button @click="submitMenuForm" type="primary">Confirm</a-button>
+        <a-button @click="cancelSubmit" type="primary" status="warning">Cancel</a-button>
+      </template>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import _ from 'lodash'
 import useMenuItem from "@/hooks/useMenuItem.js";
-import {computed, nextTick, onMounted, reactive, ref, toRefs} from "vue";
-import {IconPlus, IconDelete, IconRefresh, IconEdit, IconList, IconClose, IconSave} from '@arco-design/web-vue/es/icon'
+import useRole from "@/hooks/useRole.js";
+import {onMounted, reactive, ref, toRefs} from "vue";
+import {IconClose, IconDelete, IconEdit, IconList, IconPlus, IconRefresh, IconSave} from '@arco-design/web-vue/es/icon'
 import {Message} from "@arco-design/web-vue";
+import {MENU_ITEM_FORM_RULES} from '@/common/rule.js'
 
 const selectedItems = ref([])
 const currentMenu = reactive({})
 const showMenuRole = ref(false)
-const {queryCriteria, menuItemForm, menuItems, menuRoles, query, queryMenuRole} = useMenuItem()
+const {
+  queryCriteria,
+  menuItemForm,
+  menuItems,
+  menuRoles,
+  query,
+  queryMenuRole,
+  saveMenuRoles,
+  initMenuItemForm
+} = useMenuItem()
 const {menuName, roles} = toRefs(queryCriteria)
+const {pid, name, path, redirect, icon, hidden} = toRefs(menuItemForm)
+const parentPath = ref('')
+const {rolesOption, getAllRoles} = useRole()
+const isCreatedMode = ref(false)
+const cascaderFieldName = {
+  label: "name",
+  value: "path"
+}
 const rowSelection = reactive({
   type: 'checkbox',
   showCheckedAll: true,
   onlyCurrent: true,
 })
-const roleOption = ref([
-  {
-    id: 1,
-    name: 'root'
-  },
-  {
-    id: 2,
-    name: 'admin'
-  },
-  {
-    id: 3,
-    name: 'user'
-  },
-])
-const openCreateModal = () => {
+const dialogConfig = reactive({
+  title: '',
+  visible: false,
+  draggable: true
+})
 
+const findParent = (itemList = [], path = '') => {
+  let parent;
+  const item = _.find(itemList, (e) => {
+    return e.path === path
+  })
+  if (!_.isEmpty(item)) return item
+  else if (!_.isEmpty(item.children)) {
+    parent = findParent(item.children, path)
+  }
+  return parent;
+}
+
+const onParentChange = (val) => {
+  console.log(val)
+  if (!_.isEmpty(val)) {
+    let parentNode = findParent(menuItems.value, val)
+    pid.value = parentNode.meta.id
+    parentPath.value = parentNode.path
+  }
+  pid.value = null
+  parentPath.value = ''
+}
+
+
+const openCreateModal = () => {
+  console.log(menuItems.value)
+  isCreatedMode.value = true
+  initMenuItemForm()
+  _.assign(dialogConfig, {
+    title: 'Create Menu Item',
+    visible: true,
+    draggable: true
+  })
 }
 const openModifyModal = (record) => {
   console.log(record)
@@ -170,21 +247,25 @@ const editCurrentMenuRole = async (record) => {
   await queryMenuRole(record.meta.id)
 }
 
-const saveMenuRole = (menuId) => {
+const submitMenuForm = () => {
+
+}
+
+const cancelSubmit = () => {
 
 }
 
 const isClicked = ref(false)
 const showSelector = () => {
   isClicked.value = true
-
 }
+
 const onSelectorBlur = () => {
   isClicked.value = false
 }
+
 const insertNewRole = (val) => {
-  console.log(val)
-  let option = _.find(roleOption.value, (e) => {
+  let option = _.find(rolesOption.value, (e) => {
     return e.id === val
   })
   if (_.find(menuRoles.value, (e) => {
@@ -199,13 +280,20 @@ const insertNewRole = (val) => {
   isClicked.value = false
 }
 
+const deleteCurrentRole = (roleId) => {
+  _.remove(menuRoles.value, (e) => {
+    return e.id === roleId
+  })
+}
+
 const closeCurrentMenuRole = () => {
   showMenuRole.value = false
   _.assign(currentMenu, {})
 }
 
-onMounted(() => {
-  query(queryCriteria)
+onMounted(async () => {
+  await query(queryCriteria)
+  await getAllRoles()
 })
 
 </script>

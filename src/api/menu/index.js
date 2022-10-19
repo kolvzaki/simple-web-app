@@ -3,7 +3,8 @@ import request from "@/request/index.js";
 const URL = {
     getRawMenus: '/menus/raw',
     queryMenuItems: '/menus/query',
-    queryMenuRoles: '/menus/queryMenuRole'
+    queryMenuRoles: '/menus/queryMenuRole',
+    saveMenuRoles: '/menus/updateRoles'
 }
 export const getRawMenus = (roles = []) => {
     return request.post(URL.getRawMenus, roles)
@@ -18,5 +19,12 @@ export const queryMenuRoles = (menuId = -1) => {
         params: {
             menuId:menuId
         }
+    })
+}
+
+export const saveRoles = (menuId = -1,menuRoles=[]) => {
+    return request.post(URL.saveMenuRoles,{
+        menuId: menuId,
+        menuRoles: menuRoles
     })
 }

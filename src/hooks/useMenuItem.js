@@ -1,6 +1,9 @@
-import {generateDynamicRouteItem, generateRouteTreeByRawRoutes} from '@/router/routesOperation.js'
-import {queryMenuItems,queryMenuRoles} from "@/api/menu/index.js";
+import {generateDynamicRouteItem, generateRouteTreeByRawRoutes,regenerateRoute} from '@/router/routesOperation.js'
+import {queryMenuItems,queryMenuRoles,saveRoles} from "@/api/menu/index.js";
 import {reactive, ref} from "vue";
+import {Message} from "@arco-design/web-vue";
+import router from "@/router/index.js";
+import _ from "lodash";
 
 
 export default function useMenuItem() {
@@ -10,7 +13,7 @@ export default function useMenuItem() {
     })
 
     let menuItemForm = reactive({
-        pid: -1,
+        pid: null,
         name: '',
         path: '',
         redirect: '',
@@ -22,6 +25,18 @@ export default function useMenuItem() {
     let menuItems = ref([])
     let menuRoles = ref([])
 
+    const initMenuItemForm = () => {
+        _.assign(menuItemForm,{
+            pid: null,
+            name: '',
+            path: '',
+            redirect: '',
+            icon: '',
+            hidden: false,
+            roles: []
+        })
+    }
+
     const query = async (queryCriteria = {menuName: '', roles: []}) => {
         const {data} = await queryMenuItems(queryCriteria)
         menuItems.value = generateDynamicRouteItem(generateRouteTreeByRawRoutes(data))
@@ -31,6 +46,14 @@ export default function useMenuItem() {
         menuRoles.value = data
     }
 
+    const saveMenuRoles = async(menuId = -1) => {
+        await saveRoles(menuId,menuRoles.value)
+        Message.success({
+            content:'Success to save menu roles!'
+        })
+        await regenerateRoute(router)
+    }
+
     return {
         queryCriteria,
         menuItemForm,
@@ -38,6 +61,8 @@ export default function useMenuItem() {
         menuRoles,
 
         query,
-        queryMenuRole
+        queryMenuRole,
+        saveMenuRoles,
+        initMenuItemForm
     }
 }

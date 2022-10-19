@@ -1,7 +1,7 @@
 import {defineStore} from 'pinia'
 import pinia from "@/store/index.js";
 import _ from "lodash";
-import {TOKEN_KEY,CURRENT_PATH_KEY} from '@/common/index.js';
+import {TOKEN_KEY} from '@/common/index.js';
 import {getRawMenus} from "@/api/menu/index.js";
 
 const useUserStore = defineStore({
@@ -35,6 +35,9 @@ const useUserStore = defineStore({
                 this.rawRoutes = data
             }
             return this.rawRoutes
+        },
+        setRawRoutes(rawRoutes=[]){
+            this.rawRoutes = rawRoutes
         },
         isLogon() {
             let storeToken = sessionStorage.getItem(TOKEN_KEY)

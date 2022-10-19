@@ -1,5 +1,6 @@
 import _ from "lodash";
 import {useUserStoreOutside} from '@/store/useUserStore.js'
+import {getRawMenus} from "@/api/menu/index.js";
 
 let userStore = useUserStoreOutside()
 const modules = import.meta.glob('@/pages/**/index.vue')
@@ -123,9 +124,11 @@ export const generateDynamicRoutes = async () => {
     // return []
 }
 
-export const buildRoute = (router) => {
-    let routes = router.getRoutes();
-    let r = generateDynamicRoutes()
+export const regenerateRoute = async (router) => {
+    let routes = router.getRoutes()
+    const {data} = await getRawMenus(userStore.roles)
+    userStore.setRawRoutes(data)
+    let r = await generateDynamicRoutes()
     routes[0].children = []
     routes[0].children.push(...r, {
         path: '/:pathMatch(.*)*',

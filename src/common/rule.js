@@ -27,3 +27,18 @@ export const PERMISSION_FORM_RULES = {
         }
     ]
 }
+
+export const MENU_ITEM_FORM_RULES = {
+    name: [
+        {
+            required: true,
+            message: 'Menu Name Required'
+        }
+    ],
+    path:[
+        {
+            required: true,
+            message: 'Path Required!'
+        }
+    ]
+}
