@@ -4,7 +4,8 @@ const URL = {
     getRawMenus: '/menus/raw',
     queryMenuItems: '/menus/query',
     queryMenuRoles: '/menus/queryMenuRole',
-    saveMenuRoles: '/menus/updateRoles'
+    saveMenuRoles: '/menus/updateRoles',
+    createMenuItem: '/menus/create'
 }
 export const getRawMenus = (roles = []) => {
     return request.post(URL.getRawMenus, roles)
@@ -12,6 +13,10 @@ export const getRawMenus = (roles = []) => {
 
 export const queryMenuItems = (queryCriteria) => {
     return request.post(URL.queryMenuItems, queryCriteria);
+}
+
+export const createMenuItem = (menuItemForm = {}) => {
+    return request.post(URL.createMenuItem,menuItemForm)
 }
 
 export const queryMenuRoles = (menuId = -1) => {

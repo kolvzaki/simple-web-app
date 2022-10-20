@@ -32,13 +32,7 @@ export const MENU_ITEM_FORM_RULES = {
     name: [
         {
             required: true,
-            message: 'Menu Name Required'
-        }
-    ],
-    path:[
-        {
-            required: true,
-            message: 'Path Required!'
+            message: 'Menu name required'
         }
     ]
 }

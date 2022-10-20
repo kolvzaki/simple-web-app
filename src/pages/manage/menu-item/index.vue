@@ -125,7 +125,7 @@
     <a-modal v-model:visible="dialogConfig.visible" v-model:title="dialogConfig.title"
              v-model:draggable="dialogConfig.draggable" title-align="start"
     >
-      <a-form v-model:model="menuItemForm" ref="permissionFormRef" :rules="MENU_ITEM_FORM_RULES" auto-label-width>
+      <a-form v-model:model="menuItemForm" ref="menuFormRef" :rules="MENU_ITEM_FORM_RULES" auto-label-width>
         <a-form-item label="Parent">
           <a-cascader :options="menuItems" placeholder="Please select..."
                       check-strictly @change="onParentChange"
@@ -135,19 +135,18 @@
         <a-form-item label="Menu Name" field="name" feedback validate-trigger="blur">
           <a-input v-model:model-value="name"></a-input>
         </a-form-item>
-        <a-form-item label="Path" field="path">
+        <a-form-item label="Path" field="path" :rules="pathRules">
           <a-input v-model:model-value="path">
-            <template #prefix v-if="!_.isEmpty(pid)">
+            <template #prefix>
               {{ parentPath }}
             </template>
-            <template #prefix v-else>/</template>
           </a-input>
         </a-form-item>
         <a-form-item label="Icon">
           <a-select></a-select>
         </a-form-item>
         <a-form-item label="Hidden">
-          <a-select></a-select>
+          <a-select :options="hiddenOptions" @change="changeHidden" default-value="false"></a-select>
         </a-form-item>
       </a-form>
       <template #footer>
@@ -162,10 +161,11 @@
 import _ from 'lodash'
 import useMenuItem from "@/hooks/useMenuItem.js";
 import useRole from "@/hooks/useRole.js";
-import {onMounted, reactive, ref, toRefs} from "vue";
+import {computed, onMounted, reactive, ref, toRefs} from "vue";
 import {IconClose, IconDelete, IconEdit, IconList, IconPlus, IconRefresh, IconSave} from '@arco-design/web-vue/es/icon'
 import {Message} from "@arco-design/web-vue";
 import {MENU_ITEM_FORM_RULES} from '@/common/rule.js'
+import {letterOnlyRegex} from "@/common/regex.js";
 
 const selectedItems = ref([])
 const currentMenu = reactive({})
@@ -176,19 +176,55 @@ const {
   menuItems,
   menuRoles,
   query,
+  create,
   queryMenuRole,
   saveMenuRoles,
   initMenuItemForm
 } = useMenuItem()
 const {menuName, roles} = toRefs(queryCriteria)
 const {pid, name, path, redirect, icon, hidden} = toRefs(menuItemForm)
-const parentPath = ref('')
 const {rolesOption, getAllRoles} = useRole()
 const isCreatedMode = ref(false)
 const cascaderFieldName = {
   label: "name",
   value: "path"
 }
+const menuFormRef = ref(null)
+const hiddenOptions = ref([
+  {
+    value: 'false',
+    label: 'false'
+  },
+  {
+    value: 'true',
+    label: 'true'
+  }
+])
+const pathRules = [
+  {
+    required: true,
+    message: 'Path required!'
+  },
+  {
+    validator: (value, cb) => {
+      return new Promise(resolve => {
+        let fullPath = parentPath.value + `${value}`
+        let node = findParent(menuItems.value, fullPath)
+        if (!_.isEmpty(node)) {
+          cb('Duplicate path!')
+        }
+        if (!letterOnlyRegex.test(value)) {
+          cb('Invalid path! Letters only!')
+        }
+        resolve()
+      })
+    }
+  }
+]
+const changeHidden = (val) => {
+  hidden.value = Boolean(val) //组件不支持选择Boolean类型值?
+}
+
 const rowSelection = reactive({
   type: 'checkbox',
   showCheckedAll: true,
@@ -199,28 +235,32 @@ const dialogConfig = reactive({
   visible: false,
   draggable: true
 })
+let parentNode = reactive({})
+const parentPath = computed(() => {
+  return _.isEmpty(parentNode.path) ? '/' : parentNode.path + "/"
+})
 
 const findParent = (itemList = [], path = '') => {
-  let parent;
+  let parent = null;
   const item = _.find(itemList, (e) => {
     return e.path === path
-  })
+  }, 0)
   if (!_.isEmpty(item)) return item
-  else if (!_.isEmpty(item.children)) {
-    parent = findParent(item.children, path)
+  for (let item of itemList) {
+    if (!_.isEmpty(item.children)) {
+      parent = findParent(item.children, path)
+    }
   }
   return parent;
 }
 
 const onParentChange = (val) => {
-  console.log(val)
   if (!_.isEmpty(val)) {
-    let parentNode = findParent(menuItems.value, val)
+    parentNode = _.assign(parentNode, findParent(menuItems.value, val))
     pid.value = parentNode.meta.id
-    parentPath.value = parentNode.path
+  } else {
+    pid.value = null
   }
-  pid.value = null
-  parentPath.value = ''
 }
 
 
@@ -237,6 +277,16 @@ const openCreateModal = () => {
 const openModifyModal = (record) => {
   console.log(record)
 }
+
+const closeModal = () => {
+  initMenuItemForm()
+  _.assign(dialogConfig, {
+    title: '',
+    visible: false,
+    draggable: false
+  })
+}
+
 const deleteCurrentMenuItem = (record) => {
   console.log(record)
 }
@@ -247,8 +297,23 @@ const editCurrentMenuRole = async (record) => {
   await queryMenuRole(record.meta.id)
 }
 
-const submitMenuForm = () => {
+const submitMenuForm = async () => {
+  await menuFormRef.value.validate((errors) => {
+    if (!_.isEmpty(errors)) {
+      Message.error({
+        content: 'Invalid form params!Please check your input!'
+      })
+      return false
+    }
+  })
+  path.value = `/${path.value}`
+  if (isCreatedMode.value) {
+    await create()
+    closeModal()
+  } else {
 
+  }
+  await initData()
 }
 
 const cancelSubmit = () => {
@@ -291,36 +356,34 @@ const closeCurrentMenuRole = () => {
   _.assign(currentMenu, {})
 }
 
-onMounted(async () => {
+const initData = async () => {
   await query(queryCriteria)
   await getAllRoles()
+}
+
+onMounted(async () => {
+  await initData()
 })
 
 </script>
 
 <style scoped lang="scss">
 @import 'src/assets/sys-animate';
-
 .main-wrapper {
   width: 100%;
   height: 100%;
-
   .list-wrapper {
     margin-top: 20px;
   }
-
   .menu-role-wrapper {
     margin-top: 20px;
-
     .role-tag {
       cursor: pointer;
       margin-right: 10px;
     }
-
     .role-tag:hover {
       animation: pulse .3s;
     }
   }
 }
-
 </style>

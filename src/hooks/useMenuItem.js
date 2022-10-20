@@ -1,5 +1,5 @@
 import {generateDynamicRouteItem, generateRouteTreeByRawRoutes,regenerateRoute} from '@/router/routesOperation.js'
-import {queryMenuItems,queryMenuRoles,saveRoles} from "@/api/menu/index.js";
+import {queryMenuItems,queryMenuRoles,saveRoles,createMenuItem} from "@/api/menu/index.js";
 import {reactive, ref} from "vue";
 import {Message} from "@arco-design/web-vue";
 import router from "@/router/index.js";
@@ -16,7 +16,7 @@ export default function useMenuItem() {
         pid: null,
         name: '',
         path: '',
-        redirect: '',
+        //redirect: '',
         icon: '',
         hidden: false,
         roles: []
@@ -33,7 +33,6 @@ export default function useMenuItem() {
             redirect: '',
             icon: '',
             hidden: false,
-            roles: []
         })
     }
 
@@ -44,6 +43,14 @@ export default function useMenuItem() {
     const queryMenuRole = async(menuId=-1) => {
         const {data} = await queryMenuRoles(menuId)
         menuRoles.value = data
+    }
+
+    const create = async () => {
+        await createMenuItem(menuItemForm)
+        Message.success({
+            content:'Success to create menu item!'
+        })
+        await regenerateRoute(router)
     }
 
     const saveMenuRoles = async(menuId = -1) => {
@@ -60,6 +67,7 @@ export default function useMenuItem() {
         menuItems,
         menuRoles,
 
+        create,
         query,
         queryMenuRole,
         saveMenuRoles,
