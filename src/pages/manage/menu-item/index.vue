@@ -123,12 +123,13 @@
     </transition>
 
     <a-modal v-model:visible="dialogConfig.visible" v-model:title="dialogConfig.title"
-             v-model:draggable="dialogConfig.draggable" title-align="start"
+             v-model:draggable="dialogConfig.draggable" title-align="start" :footer="false"
     >
-      <a-form v-model:model="menuItemForm" ref="menuFormRef" :rules="MENU_ITEM_FORM_RULES" auto-label-width>
+      <a-form v-model:model="menuItemForm" ref="menuFormRef" :rules="MENU_ITEM_FORM_RULES" auto-label-width
+              @submit="submitMenuForm">
         <a-form-item label="Parent">
           <a-cascader :options="menuItems" placeholder="Please select..."
-                      check-strictly @change="onParentChange"
+                      check-strictly @change="onParentChange" v-model:model-value="cascaderDefaultValue"
                       :field-names="cascaderFieldName" allow-clear allow-search
           ></a-cascader>
         </a-form-item>
@@ -146,13 +147,15 @@
           <a-select></a-select>
         </a-form-item>
         <a-form-item label="Hidden">
-          <a-select :options="hiddenOptions" @change="changeHidden" default-value="false"></a-select>
+          <a-select :options="hiddenOptions" @change="changeHidden" v-model:value-key="hiddenValue"></a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-space>
+            <a-button html-type="submit" type="primary">Confirm</a-button>
+            <a-button @click="cancelSubmit" type="primary" status="warning">Cancel</a-button>
+          </a-space>
         </a-form-item>
       </a-form>
-      <template #footer>
-        <a-button @click="submitMenuForm" type="primary">Confirm</a-button>
-        <a-button @click="cancelSubmit" type="primary" status="warning">Cancel</a-button>
-      </template>
     </a-modal>
   </div>
 </template>
@@ -177,6 +180,7 @@ const {
   menuRoles,
   query,
   create,
+  update,
   queryMenuRole,
   saveMenuRoles,
   initMenuItemForm
@@ -221,6 +225,7 @@ const pathRules = [
     }
   }
 ]
+const hiddenValue = ref('false')
 const changeHidden = (val) => {
   hidden.value = Boolean(val) //组件不支持选择Boolean类型值?
 }
@@ -236,6 +241,7 @@ const dialogConfig = reactive({
   draggable: true
 })
 let parentNode = reactive({})
+let cascaderDefaultValue = ref('')
 const parentPath = computed(() => {
   return _.isEmpty(parentNode.path) ? '/' : parentNode.path + "/"
 })
@@ -254,18 +260,30 @@ const findParent = (itemList = [], path = '') => {
   return parent;
 }
 
+//从选中的节点的路径，通过其完整路径反查父结点
+const getPid = (path = '') => {
+  let index = path.lastIndexOf('/')
+  if (index===0){
+    cascaderDefaultValue.value = ''
+    return null;
+  }
+  let parentPath = path.substring(0,index)
+  let node = findParent(menuItems.value,parentPath)
+  cascaderDefaultValue.value = node.path
+  return node.meta.id
+}
+//通过级联选择值(path)的变化，找出其父节点，回显路径前缀
 const onParentChange = (val) => {
   if (!_.isEmpty(val)) {
-    parentNode = _.assign(parentNode, findParent(menuItems.value, val))
+    _.assign(parentNode, findParent(menuItems.value, val))
     pid.value = parentNode.meta.id
   } else {
+    _.assign(parentNode, {path: ''})
     pid.value = null
   }
 }
 
-
 const openCreateModal = () => {
-  console.log(menuItems.value)
   isCreatedMode.value = true
   initMenuItemForm()
   _.assign(dialogConfig, {
@@ -275,7 +293,17 @@ const openCreateModal = () => {
   })
 }
 const openModifyModal = (record) => {
-  console.log(record)
+  isCreatedMode.value = false
+  initMenuItemForm()
+  _.assign(dialogConfig, {
+    title: 'Update Menu Item',
+    visible: true,
+    draggable: true
+  })
+  hiddenValue.value = 'true'
+  name.value = record.name
+  path.value = record.path.substring(record.path.lastIndexOf('/') + 1)
+  pid.value = getPid(record.path)
 }
 
 const closeModal = () => {
@@ -297,27 +325,27 @@ const editCurrentMenuRole = async (record) => {
   await queryMenuRole(record.meta.id)
 }
 
-const submitMenuForm = async () => {
-  await menuFormRef.value.validate((errors) => {
-    if (!_.isEmpty(errors)) {
-      Message.error({
-        content: 'Invalid form params!Please check your input!'
-      })
-      return false
-    }
-  })
-  path.value = `/${path.value}`
-  if (isCreatedMode.value) {
-    await create()
-    closeModal()
+const submitMenuForm = async ({values, errors}) => {
+  if (errors) {
+    Message.error({
+      content: 'Invalid params!Please Check your input!'
+    })
+    return false
   } else {
-
+    path.value = `/${path.value}`
+    if (isCreatedMode.value) {
+      await create()
+    } else {
+      await update()
+    }
+    closeModal()
+    await initData()
+    return true;
   }
-  await initData()
 }
 
-const cancelSubmit = () => {
-
+const cancelSubmit = async () => {
+  closeModal()
 }
 
 const isClicked = ref(false)

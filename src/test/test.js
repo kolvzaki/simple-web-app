@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import moment from "moment";
 
 // let a = []
 // for (let i=0;i<10000;i++){
@@ -51,4 +52,6 @@ console.log(_.isEmpty(token))
 console.log(_.isEmpty(unToken))
 console.log(_.isEmpty(null))
 console.log(_.isEmpty(undefined))
+
+console.log(moment().format('YYYY-MM-DD HH:mm:ss'))
 

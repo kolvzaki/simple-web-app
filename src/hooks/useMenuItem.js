@@ -19,7 +19,7 @@ export default function useMenuItem() {
         //redirect: '',
         icon: '',
         hidden: false,
-        roles: []
+        //roles: []
     })
 
     let menuItems = ref([])
@@ -53,6 +53,10 @@ export default function useMenuItem() {
         await regenerateRoute(router)
     }
 
+    const update = () => {
+        console.log(menuItemForm)
+    }
+
     const saveMenuRoles = async(menuId = -1) => {
         await saveRoles(menuId,menuRoles.value)
         Message.success({
@@ -69,6 +73,8 @@ export default function useMenuItem() {
 
         create,
         query,
+        update,
+
         queryMenuRole,
         saveMenuRoles,
         initMenuItemForm
