@@ -9,11 +9,14 @@
               <icon-plus/>
             </template>
           </a-button>
-          <a-button type="primary" status="danger" :disabled="_.isEmpty(selectedItems)">
-            <template #icon>
-              <icon-delete/>
-            </template>
-          </a-button>
+          <a-popconfirm @ok="deleteBatchMenuItems" content="Are you sure to delete these menu?" ok-text="Sure"
+                        cancel-text="Cancel">
+            <a-button type="primary" status="danger" :disabled="_.isEmpty(selectedItems)">
+              <template #icon>
+                <icon-delete/>
+              </template>
+            </a-button>
+          </a-popconfirm>
         </a-space>
       </template>
       <template #extra>
@@ -43,8 +46,7 @@
       </a-row>
       <div class="list-wrapper">
         <a-table :data="menuItems" :row-selection="rowSelection"
-                 v-model:expanded-keys="selectedItems" :default-expand-all-rows="true"
-                 row-key="path"
+                 row-key="path" @select="updateSelectedItems" @select-all="selectAllItems"
         >
           <template #columns>
             <a-table-column title="Menu Name" data-index="name"></a-table-column>
@@ -65,11 +67,15 @@
                       <icon-list/>
                     </template>
                   </a-button>
-                  <a-button type="primary" status="danger" @click.stop="deleteCurrentMenuItem(record)">
-                    <template #icon>
-                      <icon-delete/>
-                    </template>
-                  </a-button>
+                  <a-popconfirm @ok="deleteCurrentMenuItem(record)"
+                                :content="`Are you sure to delete ${record.name} menu?`" ok-text="Sure"
+                                cancel-text="Cancel">
+                    <a-button type="primary" status="danger">
+                      <template #icon>
+                        <icon-delete/>
+                      </template>
+                    </a-button>
+                  </a-popconfirm>
                 </a-space>
               </template>
             </a-table-column>
@@ -79,7 +85,7 @@
     </a-card>
 
     <transition name="menuRoleAnime">
-      <a-card v-show="showMenuRole" class="menu-role-wrapper" title="Role Permission">
+      <a-card v-show="showMenuRole" class="menu-role-wrapper">
         <template #extra>
           <a-space>
             <a-button type="primary" status="success" @click="saveMenuRoles(currentMenu.meta.id)">
@@ -98,6 +104,9 @@
               </template>
             </a-button>
           </a-space>
+        </template>
+        <template #title>
+          Roles' for {{ currentMenu.name }}
         </template>
         <div class="role-wrapper">
           <a-tooltip v-for="role in menuRoles" :key="role.id" :content="role.description" position="bottom">
@@ -147,7 +156,7 @@
           <a-select></a-select>
         </a-form-item>
         <a-form-item label="Hidden">
-          <a-select :options="hiddenOptions" @change="changeHidden" v-model:value-key="hiddenValue"></a-select>
+          <a-select :options="hiddenOptions" @change="changeHidden" v-model:model-value="hiddenValue"></a-select>
         </a-form-item>
         <a-form-item>
           <a-space>
@@ -181,12 +190,14 @@ const {
   query,
   create,
   update,
+  del,
+  batchDel,
   queryMenuRole,
   saveMenuRoles,
   initMenuItemForm
 } = useMenuItem()
 const {menuName, roles} = toRefs(queryCriteria)
-const {pid, name, path, redirect, icon, hidden} = toRefs(menuItemForm)
+const {id, pid, name, path, redirect, icon, hidden} = toRefs(menuItemForm)
 const {rolesOption, getAllRoles} = useRole()
 const isCreatedMode = ref(false)
 const cascaderFieldName = {
@@ -214,7 +225,7 @@ const pathRules = [
       return new Promise(resolve => {
         let fullPath = parentPath.value + `${value}`
         let node = findParent(menuItems.value, fullPath)
-        if (!_.isEmpty(node)) {
+        if (!_.isEmpty(node) && !_.isEqual(currentMenu, node)) {
           cb('Duplicate path!')
         }
         if (!letterOnlyRegex.test(value)) {
@@ -227,14 +238,53 @@ const pathRules = [
 ]
 const hiddenValue = ref('false')
 const changeHidden = (val) => {
-  hidden.value = Boolean(val) //组件不支持选择Boolean类型值?
+  hidden.value = parseBoolean(val) //组件不支持选择Boolean类型值?
+}
+
+const parseBoolean = (val = '') => {
+  return val === 'true'
 }
 
 const rowSelection = reactive({
   type: 'checkbox',
   showCheckedAll: true,
   onlyCurrent: true,
+  checkStrictly: false,
 })
+
+const updateSelectedItems = (rowKeys, rowKey, record) => {
+  if (_.includes(selectedItems.value, record)) {
+    let children = findAllChildren(record)
+    _.remove(selectedItems.value, record)
+    _.remove(selectedItems.value, (e) => {
+      return children.includes(e)
+    })
+  } else {
+    selectedItems.value.push(record)
+    selectedItems.value.push(...findAllChildren(record))
+  }
+}
+
+const selectAllItems = (checked) => {
+  if (checked) {
+    for (const e of menuItems.value) {
+      selectedItems.value.push(e)
+      selectedItems.value.push(...findAllChildren(e))
+    }
+  } else {
+    selectedItems.value = []
+  }
+}
+
+const findAllChildren = (record = {}) => {
+  let res = []
+  if (_.has(record, 'children')) res.push(...record.children)
+  for (const e of res) {
+    res.push(...findAllChildren(e))
+  }
+  return res
+}
+
 const dialogConfig = reactive({
   title: '',
   visible: false,
@@ -300,7 +350,10 @@ const openModifyModal = (record) => {
     visible: true,
     draggable: true
   })
-  hiddenValue.value = 'true'
+  _.assign(currentMenu, record)
+  id.value = record.meta.id
+  hiddenValue.value = record.meta.hidden ? 'true' : 'false'
+  hidden.value = record.meta.hidden
   name.value = record.name
   path.value = record.path.substring(record.path.lastIndexOf('/') + 1)
   pid.value = getPid(record.path)
@@ -308,6 +361,10 @@ const openModifyModal = (record) => {
 
 const closeModal = () => {
   initMenuItemForm()
+  _.assign(parentNode,{
+    path: ''
+  })
+  cascaderDefaultValue.value = ''
   _.assign(dialogConfig, {
     title: '',
     visible: false,
@@ -315,8 +372,15 @@ const closeModal = () => {
   })
 }
 
-const deleteCurrentMenuItem = (record) => {
-  console.log(record)
+const deleteCurrentMenuItem = async (record) => {
+  await del(record.meta.id)
+  await initData()
+}
+
+const deleteBatchMenuItems = async () => {
+  let ids = selectedItems.value.map(e => e.meta.id)
+  await batchDel(ids)
+  await initData()
 }
 
 const editCurrentMenuRole = async (record) => {

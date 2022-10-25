@@ -1,5 +1,13 @@
 import {generateDynamicRouteItem, generateRouteTreeByRawRoutes,regenerateRoute} from '@/router/routesOperation.js'
-import {queryMenuItems,queryMenuRoles,saveRoles,createMenuItem} from "@/api/menu/index.js";
+import {
+    queryMenuItems,
+    queryMenuRoles,
+    saveRoles,
+    createMenuItem,
+    updateMenuItem,
+    deleteMenuItem,
+    deleteBatchMenuItems
+} from "@/api/menu/index.js";
 import {reactive, ref} from "vue";
 import {Message} from "@arco-design/web-vue";
 import router from "@/router/index.js";
@@ -13,6 +21,7 @@ export default function useMenuItem() {
     })
 
     let menuItemForm = reactive({
+        id: null,
         pid: null,
         name: '',
         path: '',
@@ -27,6 +36,7 @@ export default function useMenuItem() {
 
     const initMenuItemForm = () => {
         _.assign(menuItemForm,{
+            id:null,
             pid: null,
             name: '',
             path: '',
@@ -53,8 +63,28 @@ export default function useMenuItem() {
         await regenerateRoute(router)
     }
 
-    const update = () => {
-        console.log(menuItemForm)
+    const update = async () => {
+        await updateMenuItem(menuItemForm)
+        Message.success({
+            content: 'Success to update menu item!'
+        })
+        await regenerateRoute(router)
+    }
+
+    const del = async(menuId = -1) => {
+        await deleteMenuItem(menuId)
+        Message.success({
+            content: 'Success to delete menu item!'
+        })
+        await regenerateRoute(router)
+    }
+
+    const batchDel = async (menuIds = []) => {
+        await deleteBatchMenuItems(menuIds)
+        Message.success({
+            content: 'Success to delete menu items!'
+        })
+        await regenerateRoute(router)
     }
 
     const saveMenuRoles = async(menuId = -1) => {
@@ -74,6 +104,8 @@ export default function useMenuItem() {
         create,
         query,
         update,
+        del,
+        batchDel,
 
         queryMenuRole,
         saveMenuRoles,

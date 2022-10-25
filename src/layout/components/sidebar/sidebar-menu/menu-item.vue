@@ -1,5 +1,5 @@
 <template>
-  <div class="item-wrapper">
+  <div class="item-wrapper" v-if="!props.route.meta.hidden">
     <a-sub-menu v-if="!_.isEmpty(props.route.children)" :key="props.route.path">
       <template #title>
         {{props.route.name}}
